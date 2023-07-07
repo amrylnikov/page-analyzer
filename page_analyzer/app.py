@@ -11,7 +11,7 @@ from flask import (
     redirect,
     url_for
 )
-from page_analyser.validator import validate
+from page_analyzer.validator import validate
 
 connection = psycopg2.connect(
     dbname="alex",

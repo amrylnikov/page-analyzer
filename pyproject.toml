@@ -5,7 +5,7 @@ description = ""
 authors = ["amrylnikov <amrylnikov@gmail.com>"]
 readme = "README.md"
 packages = [
-  { include = "page_analyser" },
+  { include = "page_analyzer" },
 ]
 
 [tool.poetry.dependencies]
@@ -23,4 +23,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-app = "page_analyser.app:main"
+app = "page_analyzer.app:main"
