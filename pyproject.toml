@@ -14,6 +14,8 @@ flask = "^2.3.2"
 gunicorn = "^20.1.0"
 psycopg2-binary = "^2.9.6"
 validators = "^0.20.0"
+bs4 = "^0.0.1"
+requests = "^2.31.0"
 
 
 [build-system]
