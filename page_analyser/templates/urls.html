@@ -79,7 +79,16 @@ html {
     </tr>
     </thead>
     <tbody>
-      
+      {% for url in urls %}
+      <tr>
+        <td> {{ url[0] }} </td>
+        <td> 
+          <a href="{{ url_for('url_info', id=url[0]) }}"> {{ url[1] }} </a>
+        </td>
+        <td></td>
+        <td></td>
+      </tr>
+      {% endfor %}       
     </tbody>
   </table>
 </div>

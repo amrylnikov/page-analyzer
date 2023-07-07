@@ -12,7 +12,6 @@ from datetime import date
 from page_analyser.validator import validate
 
 
-
 connection = psycopg2.connect(
     dbname="alex",
     user="name",
@@ -31,9 +30,13 @@ def index():
 
 @app.get('/urls')
 def urls_display():
-
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM urls")
+    urls = cursor.fetchall()
+    cursor.close()
     return render_template(
-        '/urls.html'
+        '/urls.html',
+        urls=urls
     )
 
 
@@ -48,12 +51,25 @@ def urls_add():
             url_name=url_name,
             errors=errors,
         ), 422
+    if url_name[-1:] == '/':
+        url_name = url_name[:-1]
     date1 = date.today()
     print('Date: = ', date1)
     cursor = connection.cursor()
+    cursor.execute("SELECT name FROM urls WHERE name = '{}'".format(url_name))
+    temp = cursor.fetchone()
+    if temp:
+        if url_name == temp[0]:
+            cursor.execute("SELECT id FROM urls WHERE name = '{}'".format(url_name))
+            id_temp = cursor.fetchone()[0]
+            cursor.close()
+            flash('Страница уже существует', 'error')
+            return redirect(url_for('url_info', id=id_temp))
+    print('NOT FOUND SIMILAR NAME')
     cursor.execute("INSERT INTO urls (name, created_at) VALUES ('{}', '{}');".format(url_name, date1))
-    # cursor.execute("SELECT * FROM urls;")
-    # print(cursor.fetchone())
+    cursor.execute("SELECT id FROM urls WHERE name = '{}' AND created_at = '{}' ORDER BY id DESC".format(url_name, date1))
+    id_temp = cursor.fetchone()[0]
+    print('ID = ', id_temp)
     cursor.close()
     # user['id'] = ShortUUID().random(length=7)
     # save_user(user)
@@ -61,18 +77,27 @@ def urls_add():
     #     users = [json.loads(line.strip()) for line in f]
     # flash('User was added successfully!', 'success')
     # messages = get_flashed_messages(with_categories=True)
-    return render_template(
-        '/urls.html',
-        # users=users,
-        # messages=messages
-    )
+    flash('Страница успешно добавлена', 'success')
+    return redirect(url_for('url_info', id=id_temp))
 
 
 @app.route('/urls/<id>')
 def url_info(id):
-
-
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
+    temp = cursor.fetchone()
+    cursor.close()
+    print('id here ', temp)
+    # print(temp[0])
+    # print(temp[1])
+    # print(temp[2])
+    name = temp[1]
+    created_at = temp[2]
+    messages=get_flashed_messages(with_categories=True)
     return render_template(
-        'users/show.html',
-        user=user
+        'urls_id.html',
+        id=id,
+        name=name,
+        created_at=created_at,
+        messages=messages
     )
