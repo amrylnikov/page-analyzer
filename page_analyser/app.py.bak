@@ -1,0 +1,20 @@
+from flask import (
+    Flask,
+    flash,
+    get_flashed_messages,
+    render_template,
+    request,
+    redirect,
+    url_for
+)
+import os, json
+import uuid
+from shortuuid import ShortUUID
+
+app = Flask(__name__)
+app.secret_key = "secret_key"
+
+
+@app.route('/')
+def hello_world():
+    return 'Welcome to Flask!'
