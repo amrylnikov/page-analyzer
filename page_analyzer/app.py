@@ -2,6 +2,7 @@ import psycopg2
 from datetime import date
 import requests
 import os
+from dotenv import load_dotenv, find_dotenv
 from bs4 import BeautifulSoup
 from flask import (
     Flask,
@@ -15,6 +16,7 @@ from flask import (
 from page_analyzer.validator import validate
 
 
+load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 connection = psycopg2.connect(DATABASE_URL)
 # connection = psycopg2.connect(
