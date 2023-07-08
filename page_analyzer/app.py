@@ -1,6 +1,7 @@
 import psycopg2
 from datetime import date
 import requests
+import os
 from bs4 import BeautifulSoup
 from flask import (
     Flask,
@@ -13,11 +14,14 @@ from flask import (
 )
 from page_analyzer.validator import validate
 
-connection = psycopg2.connect(
-    dbname="alex",
-    user="name",
-    password="pass",
-    host="127.0.0.1")
+
+DATABASE_URL = os.getenv('DATABASE_URL')
+connection = psycopg2.connect(DATABASE_URL)
+# connection = psycopg2.connect(
+#     dbname="alex",
+#     user="name",
+#     password="pass",
+#     host="127.0.0.1")
 connection.autocommit = True
 
 app = Flask(__name__)
@@ -28,8 +32,8 @@ app.secret_key = "secret_key"
 def index():
     return render_template('index.html')
 
-# DISTINCT urls.id, urls.name, urls.created_at, url_checks.created_at, url_checks.status_code
-@app.get('/urls') 
+
+@app.get('/urls')
 def urls_display():
     cursor = connection.cursor()
     cursor.execute("""
@@ -136,17 +140,17 @@ def url_check(id):
         cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
         checks = cursor.fetchall()
         flash('Страница успешно проверена', 'success')
-    
+
     except:
         flash('Произошла ошибка при проверке', 'error')
-        checks=[]
-    
+        checks = []
+
     cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
     temp = cursor.fetchone()
     cursor.close()
     name = temp[1]
     created_at = temp[2]
-    
+
     messages = get_flashed_messages(with_categories=True)
     return render_template(
         'urls_id.html',
