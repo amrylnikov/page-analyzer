@@ -15,7 +15,7 @@ from flask import (
 from page_analyzer.validator import validate
 from dotenv import load_dotenv
 
-# random comment
+
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 connection = psycopg2.connect(DATABASE_URL)
