@@ -1,6 +1,5 @@
 import psycopg2
 from datetime import date
-import re
 import requests
 import os
 from bs4 import BeautifulSoup
@@ -20,11 +19,6 @@ from dotenv import load_dotenv
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 connection = psycopg2.connect(DATABASE_URL)
-# connection = psycopg2.connect(
-#     dbname="alex",
-#     user="name",
-#     password="pass",
-#     host="127.0.0.1")
 connection.autocommit = True
 
 app = Flask(__name__)
@@ -55,7 +49,6 @@ def urls_display():
 @app.post('/urls')
 def urls_add():
     url_name = request.form.get('url')
-    print('Url = ', url_name)
     errors = validate(url_name)
     if errors:
         return render_template(
@@ -66,16 +59,10 @@ def urls_add():
     split_url = url_name.rsplit('/')
     url_name = split_url[0] + '//' + split_url[2]
     date1 = date.today()
-    print('Date: = ', date1)
     cursor = connection.cursor()
     cursor.execute("SELECT name FROM urls WHERE name = '{}'".format(url_name))
     temp = cursor.fetchone()
     if temp:
-        print('------------------------')
-        print(url_name)
-        print(temp[0])
-        print(url_name[:len(temp[0])])
-        print('------------------------')
         if temp[0] == url_name or temp[0] == url_name[:len(temp[0])]:
             cursor.execute("SELECT id FROM urls WHERE name = '{}'".format(url_name))
             id_temp = cursor.fetchone()[0]
@@ -85,14 +72,7 @@ def urls_add():
     cursor.execute("INSERT INTO urls (name, created_at) VALUES ('{}', '{}');".format(url_name, date1))
     cursor.execute("SELECT id FROM urls WHERE name = '{}' AND created_at = '{}' ORDER BY id DESC".format(url_name, date1))
     id_temp = cursor.fetchone()[0]
-    print('ID = ', id_temp)
     cursor.close()
-    # user['id'] = ShortUUID().random(length=7)
-    # save_user(user)
-    # with open('users.json', 'r') as f:
-    #     users = [json.loads(line.strip()) for line in f]
-    # flash('User was added successfully!', 'success')
-    # messages = get_flashed_messages(with_categories=True)
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_info', id=id_temp))
 
@@ -149,7 +129,7 @@ def url_check(id):
         checks = cursor.fetchall()
         flash('Страница успешно проверена', 'success')
 
-    except:
+    except requests.exceptions.ConnectionError:
         flash('Произошла ошибка при проверке', 'error')
         checks = []
 
