@@ -1,5 +1,6 @@
 import psycopg2
 from datetime import date
+import re
 import requests
 import os
 from bs4 import BeautifulSoup
@@ -62,15 +63,20 @@ def urls_add():
             url_name=url_name,
             errors=errors,
         ), 422
-    if url_name[-1:] == '/':
-        url_name = url_name[:-1]
+    split_url = url_name.rsplit('/')
+    url_name = split_url[0] + '//' + split_url[2]
     date1 = date.today()
     print('Date: = ', date1)
     cursor = connection.cursor()
     cursor.execute("SELECT name FROM urls WHERE name = '{}'".format(url_name))
     temp = cursor.fetchone()
     if temp:
-        if url_name == temp[0]:
+        print('------------------------')
+        print(url_name)
+        print(temp[0])
+        print(url_name[:len(temp[0])])
+        print('------------------------')
+        if temp[0] == url_name or temp[0] == url_name[:len(temp[0])]:
             cursor.execute("SELECT id FROM urls WHERE name = '{}'".format(url_name))
             id_temp = cursor.fetchone()[0]
             cursor.close()
