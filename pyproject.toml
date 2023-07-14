@@ -16,6 +16,7 @@ validators = "^0.20.0"
 bs4 = "^0.0.1"
 requests = "^2.31.0"
 flask = "2.2.5"
+python-dotenv = "0.21.1"
 
 
 [build-system]
