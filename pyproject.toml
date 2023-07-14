@@ -15,7 +15,7 @@ psycopg2-binary = "^2.9.6"
 validators = "^0.20.0"
 bs4 = "^0.0.1"
 requests = "^2.31.0"
-flask = "^2.2.5"
+flask = "2.2.5"
 
 
 [build-system]
