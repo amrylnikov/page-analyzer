@@ -19,7 +19,7 @@ from page_analyzer.validator import validate
 
 # load_dotenv()
 # DATABASE_URL = os.getenv('DATABASE_URL')
-DATABASE_URL="postgresql://name:pass@localhost:5432/alex"
+DATABASE_URL = "postgresql://name:pass@localhost:5432/alex"
 connection = psycopg2.connect(DATABASE_URL)
 connection.autocommit = True
 
