@@ -13,10 +13,10 @@ from flask import (
     url_for
 )
 from page_analyzer.validator import validate
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 
-load_dotenv()
+# load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 connection = psycopg2.connect(DATABASE_URL)
 # connection = psycopg2.connect(
