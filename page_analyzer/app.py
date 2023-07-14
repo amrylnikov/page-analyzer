@@ -128,7 +128,7 @@ def url_check(id):
         cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
         checks = cursor.fetchall()
         flash('Страница успешно проверена', 'success')
-    except (ConnectionError, requests.exceptions.ConnectionError):
+    except Exception:
         flash('Произошла ошибка при проверке', 'error')
         checks = []
 
