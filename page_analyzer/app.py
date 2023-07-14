@@ -13,14 +13,12 @@ from flask import (
     url_for
 )
 from page_analyzer.validator import validate
-# commented for deployment on render.com
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
 
-# load_dotenv()
-# DATABASE_URL = os.getenv('DATABASE_URL')
-# DATABASE_URL = "postgresql://name:pass@localhost:5432/alex"
-# connection = psycopg2.connect(DATABASE_URL)
+load_dotenv()
+DATABASE_URL = os.getenv('DATABASE_URL')
+connection = psycopg2.connect(DATABASE_URL)
 connection = psycopg2.connect(
     host='127.0.0.1',
     user='name',
