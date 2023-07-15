@@ -18,9 +18,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
-connection = psycopg2.connect(DATABASE_URL)
-connection.autocommit = True
-cursor = connection.cursor()
+# connection = psycopg2.connect(DATABASE_URL)
+# connection.autocommit = True
+# cursor = connection.cursor()
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
@@ -33,14 +33,17 @@ def index():
 
 @app.get('/urls')
 def urls_display():
-    # cursor = connection.cursor()
+    connection = psycopg2.connect(DATABASE_URL)
+    connection.autocommit = True
+    cursor = connection.cursor()
     cursor.execute("""
                    SELECT DISTINCT urls.id, urls.name, urls.created_at, url_checks.created_at, url_checks.status_code
                    FROM urls
                    LEFT JOIN url_checks ON url_checks.url_id = urls.id
                    """)
     urls = cursor.fetchall()
-    # cursor.close()
+    cursor.close()
+    connection.close()
     return render_template(
         '/urls.html',
         urls=urls
@@ -60,32 +63,39 @@ def urls_add():
     split_url = url_name.rsplit('/')
     url_name = split_url[0] + '//' + split_url[2]
     date1 = date.today()
-    # cursor = connection.cursor()
+    connection = psycopg2.connect(DATABASE_URL)
+    connection.autocommit = True
+    cursor = connection.cursor()
     cursor.execute("SELECT name FROM urls WHERE name = '{}'".format(url_name))
     temp = cursor.fetchone()
     if temp:
         if temp[0] == url_name or temp[0] == url_name[:len(temp[0])]:
             cursor.execute("SELECT id FROM urls WHERE name = '{}'".format(url_name))
             id_temp = cursor.fetchone()[0]
-            # cursor.close()
+            cursor.close()
+            connection.close()
             flash('Страница уже существует', 'info')
             return redirect(url_for('url_info', id=id_temp))
     cursor.execute("INSERT INTO urls (name, created_at) VALUES ('{}', '{}');".format(url_name, date1))
     cursor.execute("SELECT id FROM urls WHERE name = '{}' AND created_at = '{}' ORDER BY id DESC".format(url_name, date1))
     id_temp = cursor.fetchone()[0]
-    # cursor.close()
+    cursor.close()
+    connection.close()
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_info', id=id_temp))
 
 
 @app.route('/urls/<id>')
 def url_info(id):
-    # cursor = connection.cursor()
+    connection = psycopg2.connect(DATABASE_URL)
+    connection.autocommit = True
+    cursor = connection.cursor()
     cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
     temp = cursor.fetchone()
     cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
     checks = cursor.fetchall()
-    # cursor.close()
+    cursor.close()
+    connection.close()
     name = temp[1]
     created_at = temp[2]
     messages = get_flashed_messages(with_categories=True)
@@ -101,7 +111,10 @@ def url_info(id):
 
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
-    # cursor = connection.cursor()
+    connection = psycopg2.connect(DATABASE_URL)
+    connection.autocommit = True
+    cursor = connection.cursor()
+
     try:
         cursor.execute("SELECT name FROM urls WHERE id = '{}'".format(id))
         name = cursor.fetchone()[0]
@@ -135,7 +148,8 @@ def url_check(id):
 
     cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
     temp = cursor.fetchone()
-    # cursor.close()
+    cursor.close()
+    connection.close()
     name = temp[1]
     created_at = temp[2]
 
