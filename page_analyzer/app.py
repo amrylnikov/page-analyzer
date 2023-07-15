@@ -20,6 +20,7 @@ load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 connection = psycopg2.connect(DATABASE_URL)
 connection.autocommit = True
+cursor = connection.cursor()
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
@@ -32,7 +33,7 @@ def index():
 
 @app.get('/urls')
 def urls_display():
-    cursor = connection.cursor()
+    # cursor = connection.cursor()
     cursor.execute("""
                    SELECT DISTINCT urls.id, urls.name, urls.created_at, url_checks.created_at, url_checks.status_code
                    FROM urls
@@ -59,7 +60,7 @@ def urls_add():
     split_url = url_name.rsplit('/')
     url_name = split_url[0] + '//' + split_url[2]
     date1 = date.today()
-    cursor = connection.cursor()
+    # cursor = connection.cursor()
     cursor.execute("SELECT name FROM urls WHERE name = '{}'".format(url_name))
     temp = cursor.fetchone()
     if temp:
@@ -79,7 +80,7 @@ def urls_add():
 
 @app.route('/urls/<id>')
 def url_info(id):
-    cursor = connection.cursor()
+    # cursor = connection.cursor()
     cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
     temp = cursor.fetchone()
     cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
@@ -100,7 +101,7 @@ def url_info(id):
 
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
-    cursor = connection.cursor()
+    # cursor = connection.cursor()
     try:
         cursor.execute("SELECT name FROM urls WHERE id = '{}'".format(id))
         name = cursor.fetchone()[0]
