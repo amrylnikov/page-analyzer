@@ -19,12 +19,6 @@ from dotenv import load_dotenv
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 connection = psycopg2.connect(DATABASE_URL)
-# connection = psycopg2.connect(
-#     host='127.0.0.1',
-#     user='name',
-#     password='pass',
-#     database='alex'
-#     )
 connection.autocommit = True
 
 app = Flask(__name__)
