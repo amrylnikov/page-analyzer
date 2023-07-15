@@ -18,7 +18,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
-connection = psycopg2.connect(DATABASE_URL)
+keepalive_kwargs = {
+    "keepalives": 1,
+    "keepalives_idle": 30,
+    "keepalives_interval": 5,
+    "keepalives_count": 5,
+}
+connection = psycopg2.connect(DATABASE_URL, **keepalive_kwargs)
 connection.autocommit = True
 cursor = connection.cursor()
 
