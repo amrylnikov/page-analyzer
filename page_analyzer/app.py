@@ -39,7 +39,7 @@ def urls_display():
                    LEFT JOIN url_checks ON url_checks.url_id = urls.id
                    """)
     urls = cursor.fetchall()
-    cursor.close()
+    # cursor.close()
     return render_template(
         '/urls.html',
         urls=urls
@@ -66,13 +66,13 @@ def urls_add():
         if temp[0] == url_name or temp[0] == url_name[:len(temp[0])]:
             cursor.execute("SELECT id FROM urls WHERE name = '{}'".format(url_name))
             id_temp = cursor.fetchone()[0]
-            cursor.close()
+            # cursor.close()
             flash('Страница уже существует', 'info')
             return redirect(url_for('url_info', id=id_temp))
     cursor.execute("INSERT INTO urls (name, created_at) VALUES ('{}', '{}');".format(url_name, date1))
     cursor.execute("SELECT id FROM urls WHERE name = '{}' AND created_at = '{}' ORDER BY id DESC".format(url_name, date1))
     id_temp = cursor.fetchone()[0]
-    cursor.close()
+    # cursor.close()
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_info', id=id_temp))
 
@@ -84,7 +84,7 @@ def url_info(id):
     temp = cursor.fetchone()
     cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
     checks = cursor.fetchall()
-    cursor.close()
+    # cursor.close()
     name = temp[1]
     created_at = temp[2]
     messages = get_flashed_messages(with_categories=True)
@@ -134,7 +134,7 @@ def url_check(id):
 
     cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
     temp = cursor.fetchone()
-    cursor.close()
+    # cursor.close()
     name = temp[1]
     created_at = temp[2]
 
