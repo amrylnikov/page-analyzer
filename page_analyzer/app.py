@@ -3,6 +3,7 @@ from datetime import date
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
+from bs4 import BeautifulSoup
 import psycopg2
 import requests
 from dotenv import load_dotenv
@@ -17,7 +18,7 @@ from flask import (
 )
 
 from page_analyzer.validator import validate
-from page_analyzer.functions import parse
+# from page_analyzer.functions import parse
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -106,34 +107,41 @@ def url_info(id):
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
     with connect(DATABASE_URL, True) as cursor:
-        cursor.execute("SELECT name FROM urls WHERE id = '{}'".format(id))
-        cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
-        temp = cursor.fetchone()
-        name = temp[1]
-        created_at = temp[2]
         try:
+            cursor.execute("SELECT name FROM urls WHERE id = '{}'".format(id))
+            name = cursor.fetchone()[0]
             r = requests.get(name)
+            print('STATUS CODE: ', r.status_code)
+            code = r.status_code
+            soup = BeautifulSoup(r.text, 'html.parser')
+            h1_tags = soup.find_all('h1')
+            title = soup.title.get_text()
+            h1_answer = ''
+            for h1 in h1_tags:
+                h1_text = h1.get_text()
+                h1_answer += str(h1_text)
+            meta_tags = soup.find_all('meta')
+            description = ''
+            for meta in meta_tags:
+                if meta.get('name') == 'description':
+                    site_description = meta.get('content')
+                    description += site_description
+            date1 = date.today()
+            cursor.execute('''INSERT INTO url_checks
+                        (url_id, status_code, h1, title, description, created_at)
+                        VALUES ('{}', '{}', '{}', '{}', '{}', '{}')
+                        ;'''.format(id, code, h1_answer, title, description, date1))
+            cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
+            checks = cursor.fetchall()
+            flash('Страница успешно проверена', 'success')
         except Exception:
             flash('Произошла ошибка при проверке', 'error')
-            messages = get_flashed_messages(with_categories=True)
-            return render_template(
-                'urls_id.html',
-                id=id,
-                name=name,
-                created_at=created_at,
-                messages=messages,
-                checks=[]
-            )
-        code, h1, title, description = parse(r)
-        date1 = date.today()
-        cursor.execute('''INSERT INTO url_checks
-                    (url_id, status_code, h1, title, description, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    ;''', (id, code, h1, title, description, date1))
-        cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
-        checks = cursor.fetchall()
+            checks = []
+        cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
+        temp = cursor.fetchone()
+    name = temp[1]
+    created_at = temp[2]
 
-    flash('Страница успешно проверена', 'success')
     messages = get_flashed_messages(with_categories=True)
     return render_template(
         'urls_id.html',
