@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 
 import psycopg2
 import requests
-from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -133,7 +132,7 @@ def url_check(id):
                     ;''', (id, code, h1, title, description, date1))
         cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
         checks = cursor.fetchall()
-    
+
     flash('Страница успешно проверена', 'success')
     messages = get_flashed_messages(with_categories=True)
     return render_template(
