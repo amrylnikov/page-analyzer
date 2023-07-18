@@ -1,12 +1,12 @@
 import validators
 
 
-def validate(url_in):
+def validate(url):
     errors = []
-    if len(url_in) > 255:
+    if len(url) > 255:
         errors.append("URL превышает 255 символов")
-    if not validators.url(url_in):
+    if not validators.url(url):
         errors.append("Некорректный URL")
-    if not url_in:
+    if not url:
         errors.append("URL обязателен")
     return errors
