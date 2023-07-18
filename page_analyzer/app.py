@@ -1,10 +1,12 @@
 import os
+from datetime import date
 from contextlib import contextmanager
 from urllib.parse import urlparse
-from datetime import date
+
 import psycopg2
 import requests
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from flask import (
     Flask,
     flash,
@@ -14,9 +16,9 @@ from flask import (
     redirect,
     url_for
 )
-from page_analyzer.validator import validate
-from dotenv import load_dotenv
 
+from page_analyzer.validator import validate
+from page_analyzer.functions import parse
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -76,8 +78,7 @@ def urls_add():
         if id:
             flash('Страница уже существует', 'info')
             return redirect(url_for('url_info', id=id[0]))
-        cursor.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s);", (url_name, creation_date))
-        cursor.execute("SELECT id FROM urls WHERE name = '{}' AND created_at = '{}' ORDER BY id DESC".format(url_name, creation_date))
+        cursor.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id;", (url_name, creation_date))
         id = cursor.fetchone()[0]
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_info', id=id))
@@ -106,41 +107,34 @@ def url_info(id):
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
     with connect(DATABASE_URL, True) as cursor:
-        try:
-            cursor.execute("SELECT name FROM urls WHERE id = '{}'".format(id))
-            name = cursor.fetchone()[0]
-            r = requests.get(name)
-            print('STATUS CODE: ', r.status_code)
-            code = r.status_code
-            soup = BeautifulSoup(r.text, 'html.parser')
-            h1_tags = soup.find_all('h1')
-            title = soup.title.get_text()
-            h1_answer = ''
-            for h1 in h1_tags:
-                h1_text = h1.get_text()
-                h1_answer += str(h1_text)
-            meta_tags = soup.find_all('meta')
-            description = ''
-            for meta in meta_tags:
-                if meta.get('name') == 'description':
-                    site_description = meta.get('content')
-                    description += site_description
-            date1 = date.today()
-            cursor.execute('''INSERT INTO url_checks
-                        (url_id, status_code, h1, title, description, created_at)
-                        VALUES ('{}', '{}', '{}', '{}', '{}', '{}')
-                        ;'''.format(id, code, h1_answer, title, description, date1))
-            cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
-            checks = cursor.fetchall()
-            flash('Страница успешно проверена', 'success')
-        except Exception:
-            flash('Произошла ошибка при проверке', 'error')
-            checks = []
+        cursor.execute("SELECT name FROM urls WHERE id = '{}'".format(id))
         cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
         temp = cursor.fetchone()
-    name = temp[1]
-    created_at = temp[2]
-
+        name = temp[1]
+        created_at = temp[2]
+        try:
+            r = requests.get(name)
+        except Exception:
+            flash('Произошла ошибка при проверке', 'error')
+            messages = get_flashed_messages(with_categories=True)
+            return render_template(
+                'urls_id.html',
+                id=id,
+                name=name,
+                created_at=created_at,
+                messages=messages,
+                checks=[]
+            )
+        code, h1, title, description = parse(r)
+        date1 = date.today()
+        cursor.execute('''INSERT INTO url_checks
+                    (url_id, status_code, h1, title, description, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ;''', (id, code, h1, title, description, date1))
+        cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
+        checks = cursor.fetchall()
+    
+    flash('Страница успешно проверена', 'success')
     messages = get_flashed_messages(with_categories=True)
     return render_template(
         'urls_id.html',
