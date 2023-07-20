@@ -105,7 +105,7 @@ def url_info(id):
         id=id,
         name=name,
         created_at=created_at,
-        checks=checks,
+        checks=checks
     )
 
 
