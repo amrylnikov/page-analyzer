@@ -3,8 +3,6 @@ from datetime import date
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
-# from bs4 import BeautifulSoup
-
 import psycopg2
 import requests
 from dotenv import load_dotenv
@@ -108,28 +106,15 @@ def url_info(id):
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
     with connect(DATABASE_URL, True) as cursor:
+        cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
+        temp = cursor.fetchone()
+        name = temp[1]
+        created_at = temp[2]
         try:
-            cursor.execute("SELECT name FROM urls WHERE id = '{}'".format(id))
-            name = cursor.fetchone()[0]
-
             r = requests.get(name)
 
             code, h1, title, description = parse(r)
 
-            # code = r.status_code
-            # soup = BeautifulSoup(r.text, 'html.parser')
-            # h1_tags = soup.find_all('h1')
-            # title = soup.title.get_text()
-            # h1_answer = ''
-            # for h1 in h1_tags:
-            #     h1_text = h1.get_text()
-            #     h1_answer += str(h1_text)
-            # meta_tags = soup.find_all('meta')
-            # description = ''
-            # for meta in meta_tags:
-            #     if meta.get('name') == 'description':
-            #         site_description = meta.get('content')
-            #         description += site_description
             date1 = date.today()
             cursor.execute('''INSERT INTO url_checks
                         (url_id, status_code, h1, title, description, created_at)
@@ -143,8 +128,6 @@ def url_check(id):
             checks = []
         cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
         temp = cursor.fetchone()
-    name = temp[1]
-    created_at = temp[2]
 
     messages = get_flashed_messages(with_categories=True)
     return render_template(
