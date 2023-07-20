@@ -3,7 +3,7 @@ from datetime import date
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 
 import psycopg2
 import requests
