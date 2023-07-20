@@ -94,9 +94,13 @@ def url_check(id):
     try:
         r = requests.get(name)
         code, h1, title, description = parse(r)
-        date1 = date.today()
-        checks = db.create_check(id, code, h1, title, description, date1)
-        flash('Страница успешно проверена', 'success')
+        if code != 200:
+            checks = []
+            flash('Произошла ошибка при проверке', 'error')
+        else:
+            date1 = date.today()
+            checks = db.create_check(id, code, h1, title, description, date1)
+            flash('Страница успешно проверена', 'success')
     except Exception:
         checks = []
         flash('Произошла ошибка при проверке', 'error')
