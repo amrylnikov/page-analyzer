@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from flask import (
     Flask,
     flash,
-    get_flashed_messages,
     render_template,
     request,
     redirect,
@@ -100,25 +99,26 @@ def url_info(id):
             name = temp[1]
             created_at = temp[2]
         except TypeError:
-            return render_template('index.html')
-    messages = get_flashed_messages(with_categories=True)
+            return redirect(url_for('index'))
     return render_template(
         'urls_id.html',
         id=id,
         name=name,
         created_at=created_at,
         checks=checks,
-        messages=messages
     )
 
 
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
     with connect(DATABASE_URL, True) as cursor:
-        cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
-        temp = cursor.fetchone()
-        name = temp[1]
-        created_at = temp[2]
+        try:
+            cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
+            temp = cursor.fetchone()
+            name = temp[1]
+            created_at = temp[2]
+        except TypeError:
+            return redirect(url_for('index'))
         try:
             r = requests.get(name)
 
@@ -134,12 +134,10 @@ def url_check(id):
         except Exception:
             checks = []
             flash('Произошла ошибка при проверке', 'error')
-    messages = get_flashed_messages(with_categories=True)
     return render_template(
         'urls_id.html',
         id=id,
         name=name,
         created_at=created_at,
-        messages=messages,
         checks=checks
     )
