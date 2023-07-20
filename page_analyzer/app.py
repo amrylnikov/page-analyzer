@@ -1,16 +1,15 @@
 import os
-from contextlib import contextmanager
 from datetime import date
 from urllib.parse import urlparse
 
-import psycopg2
 import requests
 from dotenv import load_dotenv
-from flask import Flask, abort, flash, redirect, render_template, request, url_for
+from flask import (Flask, abort, flash, redirect, render_template, request,
+                   url_for)
 
+from page_analyzer import db
 from page_analyzer.functions import parse
 from page_analyzer.validator import validate
-from page_analyzer import db
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -69,19 +68,6 @@ def url_info(id):
         created_at=created_at,
         checks=checks
     )
-
-
-@contextmanager
-def connect(bd_url, autocommit_flag=False):
-    try:
-        connection = psycopg2.connect(bd_url)
-        if autocommit_flag:
-            connection.autocommit = True
-        cursor = connection.cursor()
-        yield cursor
-    finally:
-        cursor.close()
-        connection.close()
 
 
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
