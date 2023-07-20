@@ -1,9 +1,7 @@
 import os
-from contextlib import contextmanager
 from datetime import date
 from urllib.parse import urlparse
 
-import psycopg2
 import requests
 from dotenv import load_dotenv
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
@@ -19,19 +17,6 @@ app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
 
-@contextmanager
-def connect(bd_url, autocommit_flag=False):
-    try:
-        connection = psycopg2.connect(bd_url)
-        if autocommit_flag:
-            connection.autocommit = True
-        cursor = connection.cursor()
-        yield cursor
-    finally:
-        cursor.close()
-        connection.close()
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -39,19 +24,7 @@ def index():
 
 @app.get('/urls')
 def urls_display():
-    with connect(DATABASE_URL) as cursor:
-        cursor.execute("""
-                    SELECT DISTINCT urls.id, urls.name, urls.created_at, url_checks.created_at, url_checks.status_code
-                    FROM urls
-                    LEFT JOIN (
-                        SELECT url_id, MAX(created_at) AS max_created_at
-                        FROM url_checks
-                        GROUP BY url_id
-                    ) latest_checks ON latest_checks.url_id = urls.id
-                    LEFT JOIN url_checks ON url_checks.url_id = urls.id AND url_checks.created_at = latest_checks.max_created_at
-                    ORDER BY urls.id
-                    """)
-        urls = cursor.fetchall()
+    urls = db.get_sites()
     return render_template(
         '/urls.html',
         urls=urls
@@ -70,14 +43,11 @@ def urls_add():
     url_parsed = urlparse(url_name)
     url_name = url_parsed.scheme + '://' + url_parsed.netloc
     creation_date = date.today()
-    with connect(DATABASE_URL, True) as cursor:
-        cursor.execute("SELECT id FROM urls WHERE name = '{}'".format(url_name))
-        id = cursor.fetchone()
-        if id:
-            flash('Страница уже существует', 'info')
-            return redirect(url_for('url_info', id=id[0]))
-        cursor.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id;", (url_name, creation_date))
-        id = cursor.fetchone()[0]
+    id = db.get_url_id_by_name(url_name)
+    if id:
+        flash('Страница уже существует', 'info')
+        return redirect(url_for('url_info', id=id[0]))
+    id = db.create_url(url_name, creation_date)
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_info', id=id))
 
@@ -101,29 +71,21 @@ def url_info(id):
 
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
-    with connect(DATABASE_URL, True) as cursor:
-        try:
-            cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
-            temp = cursor.fetchone()
-            name = temp[1]
-            created_at = temp[2]
-        except TypeError:
-            return redirect(url_for('index'))
-        try:
-            r = requests.get(name)
+    url = db.get_url_by_id(id)
+    if not url:
+        abort(404)
+    name = url[1]
+    created_at = url[2]
+    try:
+        r = requests.get(name)
 
-            code, h1, title, description = parse(r)
-            date1 = date.today()
-            cursor.execute('''INSERT INTO url_checks
-                        (url_id, status_code, h1, title, description, created_at)
-                        VALUES ('{}', '{}', '{}', '{}', '{}', '{}')
-                        ;'''.format(id, code, h1, title, description, date1))
-            cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
-            checks = cursor.fetchall()
-            flash('Страница успешно проверена', 'success')
-        except Exception:
-            checks = []
-            flash('Произошла ошибка при проверке', 'error')
+        code, h1, title, description = parse(r)
+        date1 = date.today()
+        checks = db.create_check(id, code, h1, title, description, date1)
+        flash('Страница успешно проверена', 'success')
+    except Exception:
+        checks = []
+        flash('Произошла ошибка при проверке', 'error')
     return render_template(
         'urls_id.html',
         id=id,
