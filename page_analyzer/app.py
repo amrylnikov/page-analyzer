@@ -50,7 +50,13 @@ def urls_display():
         cursor.execute("""
                     SELECT DISTINCT urls.id, urls.name, urls.created_at, url_checks.created_at, url_checks.status_code
                     FROM urls
-                    LEFT JOIN url_checks ON url_checks.url_id = urls.id
+                    LEFT JOIN (
+                        SELECT url_id, MAX(created_at) AS max_created_at
+                        FROM url_checks
+                        GROUP BY url_id
+                    ) latest_checks ON latest_checks.url_id = urls.id
+                    LEFT JOIN url_checks ON url_checks.url_id = urls.id AND url_checks.created_at = latest_checks.max_created_at
+                    ORDER BY urls.id
                     """)
         urls = cursor.fetchall()
     return render_template(
@@ -86,12 +92,15 @@ def urls_add():
 @app.route('/urls/<id>')
 def url_info(id):
     with connect(DATABASE_URL) as cursor:
-        cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
-        temp = cursor.fetchone()
-        cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
-        checks = cursor.fetchall()
-    name = temp[1]
-    created_at = temp[2]
+        try:
+            cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
+            temp = cursor.fetchone()
+            cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
+            checks = cursor.fetchall()
+            name = temp[1]
+            created_at = temp[2]
+        except TypeError:
+            return render_template('index.html')
     messages = get_flashed_messages(with_categories=True)
     return render_template(
         'urls_id.html',
