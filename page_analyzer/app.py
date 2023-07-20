@@ -1,22 +1,16 @@
 import os
-from datetime import date
 from contextlib import contextmanager
+from datetime import date
 from urllib.parse import urlparse
 
 import psycopg2
 import requests
 from dotenv import load_dotenv
-from flask import (
-    Flask,
-    flash,
-    render_template,
-    request,
-    redirect,
-    url_for
-)
+from flask import Flask, abort, flash, redirect, render_template, request, url_for
 
-from page_analyzer.validator import validate
 from page_analyzer.functions import parse
+from page_analyzer.validator import validate
+from page_analyzer import db
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -90,16 +84,12 @@ def urls_add():
 
 @app.route('/urls/<id>')
 def url_info(id):
-    with connect(DATABASE_URL) as cursor:
-        try:
-            cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
-            temp = cursor.fetchone()
-            cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
-            checks = cursor.fetchall()
-            name = temp[1]
-            created_at = temp[2]
-        except TypeError:
-            return redirect(url_for('index'))
+    url = db.get_url_by_id(id)
+    if not url:
+        abort(404)
+    name = url[1]
+    created_at = url[2]
+    checks = db.get_url_checks_by_id(id)
     return render_template(
         'urls_id.html',
         id=id,
