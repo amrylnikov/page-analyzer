@@ -86,27 +86,29 @@ def connect(bd_url, autocommit_flag=False):
 
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
-    url = db.get_url_by_id(id)
-    if not url:
-        abort(404)
-    name = url[1]
-    created_at = url[2]
-    try:
-        r = requests.get(name)
-        code, h1, title, description = parse(r)
-        date1 = date.today()
-        with connect(DATABASE_URL, True) as cursor:
+    with connect(DATABASE_URL, True) as cursor:
+        try:
+            cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
+            temp = cursor.fetchone()
+            name = temp[1]
+            created_at = temp[2]
+        except TypeError:
+            return redirect(url_for('index'))
+        try:
+            r = requests.get(name)
+
+            code, h1, title, description = parse(r)
+            date1 = date.today()
             cursor.execute('''INSERT INTO url_checks
                         (url_id, status_code, h1, title, description, created_at)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                        ;''', (id, code, h1, title, description, date1))
+                        VALUES ('{}', '{}', '{}', '{}', '{}', '{}')
+                        ;'''.format(id, code, h1, title, description, date1))
             cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
             checks = cursor.fetchall()
-        # checks = db.create_check(id, code, h1, title, description, date1)
-        flash('Страница успешно проверена', 'success')
-    except Exception:
-        checks = []
-        flash('Произошла ошибка при проверке', 'error')
+            flash('Страница успешно проверена', 'success')
+        except Exception:
+            checks = []
+            flash('Произошла ошибка при проверке', 'error')
     return render_template(
         'urls_id.html',
         id=id,
