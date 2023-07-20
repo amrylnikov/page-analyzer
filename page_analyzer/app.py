@@ -112,23 +112,30 @@ def url_check(id):
         created_at = temp[2]
         try:
             r = requests.get(name)
-
-            code, h1, title, description = parse(r)
-
-            date1 = date.today()
-            cursor.execute('''INSERT INTO url_checks
-                        (url_id, status_code, h1, title, description, created_at)
-                        VALUES ('{}', '{}', '{}', '{}', '{}', '{}')
-                        ;'''.format(id, code, h1, title, description, date1))
-            cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
-            checks = cursor.fetchall()
-            flash('Страница успешно проверена', 'success')
         except Exception:
             flash('Произошла ошибка при проверке', 'error')
+            messages = get_flashed_messages(with_categories=True)
             checks = []
-        cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
-        temp = cursor.fetchone()
+            return render_template(
+                'urls_id.html',
+                id=id,
+                name=name,
+                created_at=created_at,
+                messages=messages,
+                checks=checks
+            )
 
+
+        code, h1, title, description = parse(r)
+        date1 = date.today()
+        cursor.execute('''INSERT INTO url_checks
+                    (url_id, status_code, h1, title, description, created_at)
+                    VALUES ('{}', '{}', '{}', '{}', '{}', '{}')
+                    ;'''.format(id, code, h1, title, description, date1))
+        cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
+        checks = cursor.fetchall()
+    
+    flash('Страница успешно проверена', 'success')
     messages = get_flashed_messages(with_categories=True)
     return render_template(
         'urls_id.html',
