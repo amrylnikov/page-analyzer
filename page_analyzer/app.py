@@ -1,7 +1,9 @@
 import os
+from contextlib import contextmanager
 from datetime import date
 from urllib.parse import urlparse
 
+import psycopg2
 import requests
 from dotenv import load_dotenv
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
@@ -69,6 +71,19 @@ def url_info(id):
     )
 
 
+@contextmanager
+def connect(bd_url, autocommit_flag=False):
+    try:
+        connection = psycopg2.connect(bd_url)
+        if autocommit_flag:
+            connection.autocommit = True
+        cursor = connection.cursor()
+        yield cursor
+    finally:
+        cursor.close()
+        connection.close()
+
+
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
     url = db.get_url_by_id(id)
@@ -78,10 +93,16 @@ def url_check(id):
     created_at = url[2]
     try:
         r = requests.get(name)
-
         code, h1, title, description = parse(r)
         date1 = date.today()
-        checks = db.create_check(id, code, h1, title, description, date1)
+        with connect(DATABASE_URL, True) as cursor:
+            cursor.execute('''INSERT INTO url_checks
+                        (url_id, status_code, h1, title, description, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                        ;''', (id, code, h1, title, description, date1))
+            cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
+            checks = cursor.fetchall()
+        # checks = db.create_check(id, code, h1, title, description, date1)
         flash('Страница успешно проверена', 'success')
     except Exception:
         checks = []
