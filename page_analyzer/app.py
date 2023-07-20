@@ -19,7 +19,7 @@ from flask import (
 )
 
 from page_analyzer.validator import validate
-# from page_analyzer.functions import parse
+from page_analyzer.functions import parse
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -111,27 +111,30 @@ def url_check(id):
         try:
             cursor.execute("SELECT name FROM urls WHERE id = '{}'".format(id))
             name = cursor.fetchone()[0]
+
             r = requests.get(name)
-            print('STATUS CODE: ', r.status_code)
-            code = r.status_code
-            soup = BeautifulSoup(r.text, 'html.parser')
-            h1_tags = soup.find_all('h1')
-            title = soup.title.get_text()
-            h1_answer = ''
-            for h1 in h1_tags:
-                h1_text = h1.get_text()
-                h1_answer += str(h1_text)
-            meta_tags = soup.find_all('meta')
-            description = ''
-            for meta in meta_tags:
-                if meta.get('name') == 'description':
-                    site_description = meta.get('content')
-                    description += site_description
+
+            code, h1, title, description = parse(r)
+
+            # code = r.status_code
+            # soup = BeautifulSoup(r.text, 'html.parser')
+            # h1_tags = soup.find_all('h1')
+            # title = soup.title.get_text()
+            # h1_answer = ''
+            # for h1 in h1_tags:
+            #     h1_text = h1.get_text()
+            #     h1_answer += str(h1_text)
+            # meta_tags = soup.find_all('meta')
+            # description = ''
+            # for meta in meta_tags:
+            #     if meta.get('name') == 'description':
+            #         site_description = meta.get('content')
+            #         description += site_description
             date1 = date.today()
             cursor.execute('''INSERT INTO url_checks
                         (url_id, status_code, h1, title, description, created_at)
                         VALUES ('{}', '{}', '{}', '{}', '{}', '{}')
-                        ;'''.format(id, code, h1_answer, title, description, date1))
+                        ;'''.format(id, code, h1, title, description, date1))
             cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
             checks = cursor.fetchall()
             flash('Страница успешно проверена', 'success')
