@@ -86,20 +86,23 @@ def connect(bd_url, autocommit_flag=False):
 
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
+    url = db.get_url_by_id(id)
+    if not url:
+        abort(404)
+    name = url[1]
+    created_at = url[2]
     with connect(DATABASE_URL, True) as cursor:
-        try:
-            cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
-            temp = cursor.fetchone()
-            name = temp[1]
-            created_at = temp[2]
-        except TypeError:
-            return redirect(url_for('index'))
         try:
             r = requests.get(name)
 
             code, h1, title, description = parse(r)
             date1 = date.today()
-            checks = db.create_check(id, code, h1, title, description, date1)
+            cursor.execute('''INSERT INTO url_checks
+                        (url_id, status_code, h1, title, description, created_at)
+                        VALUES ('{}', '{}', '{}', '{}', '{}', '{}')
+                        ;'''.format(id, code, h1, title, description, date1))
+            cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
+            checks = cursor.fetchall()
             flash('Страница успешно проверена', 'success')
         except Exception:
             checks = []
