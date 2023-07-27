@@ -1,6 +1,5 @@
 import os
 from contextlib import contextmanager
-from datetime import date
 from urllib.parse import urlparse
 
 import psycopg2
