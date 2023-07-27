@@ -38,6 +38,7 @@ def connect(bd_url, autocommit_flag=False):
 def index():
     return render_template('index.html')
 
+
 # url_lists
 @app.get('/urls')
 def urls_display():
