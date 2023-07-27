@@ -37,11 +37,10 @@ def index():
     return render_template('index.html')
 
 
-# url_lists
 @app.get('/urls')
-def urls_display():
+def urls_lists():
     with connect(DATABASE_URL) as conn:
-        urls = db.get_sites(conn)
+        urls = db.get_all_url_checks(conn)
     return render_template(
         '/urls.html',
         urls=urls
@@ -59,14 +58,12 @@ def urls_add():
         ), 422
     url_parsed = urlparse(url_name)
     url_name = url_parsed.scheme + '://' + url_parsed.netloc
-    # creation_date под капот
-    creation_date = date.today()
     with connect(DATABASE_URL, True) as conn:
         id = db.get_url_id_by_name(conn, url_name)
         if id:
             flash('Страница уже существует', 'info')
             return redirect(url_for('url_info', id=id[0]))
-        id = db.create_url(conn, url_name, creation_date)
+        id = db.create_url(conn, url_name)
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_info', id=id))
 
@@ -111,8 +108,7 @@ def url_check(id):
                 checks = []
                 flash('Произошла ошибка при проверке', 'error')
             else:
-                date1 = date.today()
-                checks = db.create_check(conn, id, code, h1, title, description, date1)
+                checks = db.create_check(conn, id, code, h1, title, description)
                 flash('Страница успешно проверена', 'success')
         except Exception:
             checks = []
