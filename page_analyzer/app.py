@@ -3,8 +3,8 @@ from contextlib import contextmanager
 from urllib.parse import urlparse
 
 import psycopg2
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from flask import (Flask, abort, flash, redirect, render_template, request,
                    url_for)
