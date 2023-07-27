@@ -23,7 +23,6 @@ def get_url_by_id(conn, id):
         return cursor.fetchone()
 
 
-# И в курсоре передавать переменные
 def get_url_checks_by_id(conn, id):
     with get_cursor(conn) as cursor:
         cursor.execute("SELECT id, url_id, status_code, h1, title, description, created_at FROM url_checks WHERE url_id = %s", (id,))
@@ -38,18 +37,11 @@ def get_url_id_by_name(conn, name):
 
 def get_all_url_checks(conn):
     with get_cursor(conn) as cursor:
-        # urls.created_at не надо
-        # Попытаться упростить, DISTINCT на одно поле сделать "dittinct by one column"
         cursor.execute("""
-                    SELECT DISTINCT urls.id, urls.name, urls.created_at, url_checks.created_at, url_checks.status_code
+                    SELECT DISTINCT ON (urls.id) urls.id, urls.name, url_checks.created_at, url_checks.status_code
                     FROM urls
-                    LEFT JOIN (
-                        SELECT url_id, MAX(created_at) AS max_created_at
-                        FROM url_checks
-                        GROUP BY url_id
-                    ) latest_checks ON latest_checks.url_id = urls.id
-                    LEFT JOIN url_checks ON url_checks.url_id = urls.id AND url_checks.created_at = latest_checks.max_created_at
-                    ORDER BY urls.id
+                    LEFT JOIN url_checks ON url_checks.url_id = urls.id
+                    ORDER BY urls.id;
                     """)
         return cursor.fetchall()
 
@@ -61,7 +53,6 @@ def create_url(conn, name):
         return cursor.fetchone()[0]
 
 
-# date1 замени на creation_date ибо одно и то же
 def create_check(conn, id, code, h1, title, description):
     with get_cursor(conn) as cursor:
         creation_date = date.today()
