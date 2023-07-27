@@ -61,7 +61,7 @@ def urls_add():
     url_name = url_parsed.scheme + '://' + url_parsed.netloc
     # creation_date под капот
     creation_date = date.today()
-    with connect(DATABASE_URL) as conn:
+    with connect(DATABASE_URL, True) as conn:
         id = db.get_url_id_by_name(conn, url_name)
         if id:
             flash('Страница уже существует', 'info')
@@ -91,7 +91,7 @@ def url_info(id):
 
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
-    with connect(DATABASE_URL) as conn:
+    with connect(DATABASE_URL, True) as conn:
         url = db.get_url_by_id(conn, id)
         if not url:
             abort(404)
