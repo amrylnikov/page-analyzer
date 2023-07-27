@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-
+# Переделать по ссылке из тг, поизучать, и курсор там отдельно как-то... Отдельно в каждой функции по ссылке, которую Андрей кинул L31
 @contextmanager
 def connect(bd_url, autocommit_flag=False):
     try:
@@ -20,27 +20,31 @@ def connect(bd_url, autocommit_flag=False):
         cursor.close()
         connection.close()
 
-
-def get_url_by_id(id):
+# не закрывать коннект сразу, ибо каждый раз подключиться - затратно
+# Открывать и закрывать коннекшн в рамках функции в app, а не для каждого запроса
+def get_url_by_id(id): # переделать '{}' на %
     with connect(DATABASE_URL) as cursor:
-        cursor.execute("SELECT * FROM urls WHERE id = '{}'".format(id))
+        cursor.execute("SELECT * FROM urls WHERE id = %s", (id,))
         return cursor.fetchone()
 
-
+# И вместо звёздочек в запросе SELECT * FROM url_checks WHERE перечисляй всё, ибо для стороннего непонятно. 
+#И в курсоре передавать переменные
 def get_url_checks_by_id(id):
     with connect(DATABASE_URL) as cursor:
-        cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
+        cursor.execute("SELECT * FROM url_checks WHERE url_id = %s", (id,))
         return cursor.fetchall()
 
 
 def get_url_id_by_name(name):
     with connect(DATABASE_URL) as cursor:
-        cursor.execute("SELECT id FROM urls WHERE name = '{}'".format(name))
+        cursor.execute("SELECT id FROM urls WHERE name = %s", (name,))
         return cursor.fetchone()
 
-
+# название смени get_all_url_checks
 def get_sites():
     with connect(DATABASE_URL) as cursor:
+        # urls.created_at не надо
+        # Попытаться упростить, DISTINCT на одно поле сделать "dittinct by one column"
         cursor.execute("""
                     SELECT DISTINCT urls.id, urls.name, urls.created_at, url_checks.created_at, url_checks.status_code
                     FROM urls
@@ -54,18 +58,18 @@ def get_sites():
                     """)
         return cursor.fetchall()
 
-
+# И creation_date создавать прям в этой функции, а не передавать, чтоб функция была самодостаточной. 
 def create_url(name, creation_date):
     with connect(DATABASE_URL, True) as cursor:
         cursor.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id;", (name, creation_date))
         return cursor.fetchone()[0]
 
-
+# date1 замени на creation_date ибо одно и то же
 def create_check(id, code, h1, title, description, date1):
     with connect(DATABASE_URL, True) as cursor:
         cursor.execute('''INSERT INTO url_checks
                     (url_id, status_code, h1, title, description, created_at)
                     VALUES (%s, %s, %s, %s, %s, %s)
                     ;''', (id, code, h1, title, description, date1))
-        cursor.execute("SELECT * FROM url_checks WHERE url_id = '{}'".format(id))
+        cursor.execute("SELECT * FROM url_checks WHERE url_id = %s", (id,))
         return cursor.fetchall()

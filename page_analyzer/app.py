@@ -1,14 +1,17 @@
 import os
+from contextlib import contextmanager
 from datetime import date
 from urllib.parse import urlparse
 
+import psycopg2
+from bs4 import BeautifulSoup
 import requests
 from dotenv import load_dotenv
 from flask import (Flask, abort, flash, redirect, render_template, request,
                    url_for)
 
 from page_analyzer import db
-from page_analyzer.functions import parse
+from page_analyzer.functions import parse_seo_content
 from page_analyzer.validator import validate
 
 load_dotenv()
@@ -18,11 +21,24 @@ app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
 
+@contextmanager
+def connect(bd_url, autocommit_flag=False):
+    try:
+        connection = psycopg2.connect(bd_url)
+        if autocommit_flag:
+            connection.autocommit = True
+        cursor = connection.cursor()
+        yield cursor
+    finally:
+        cursor.close()
+        connection.close()
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
-
+# url_lists
 @app.get('/urls')
 def urls_display():
     urls = db.get_sites()
@@ -43,6 +59,7 @@ def urls_add():
         ), 422
     url_parsed = urlparse(url_name)
     url_name = url_parsed.scheme + '://' + url_parsed.netloc
+    # creation_date под капот
     creation_date = date.today()
     id = db.get_url_id_by_name(url_name)
     if id:
@@ -78,8 +95,15 @@ def url_check(id):
     name = url[1]
     created_at = url[2]
     try:
-        r = requests.get(name)
-        code, h1, title, description = parse(r)
+        # r -> response
+        # логировать чтобы понимать что происходит с приложением. В опасных местах. Важные переменные и т.д.
+        # Например этот реквест
+        request = requests.get(name)
+        # вынести за трай парсинк и ифы
+        # И вместо чексов он делает редирект в каждом месте flash.
+        code = request.status_code
+        soup = BeautifulSoup(request.text, 'html.parser')
+        h1, title, description = parse_seo_content(soup)
         if code != 200:
             checks = []
             flash('Произошла ошибка при проверке', 'error')
