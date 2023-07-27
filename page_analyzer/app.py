@@ -27,10 +27,8 @@ def connect(bd_url, autocommit_flag=False):
         connection = psycopg2.connect(bd_url)
         if autocommit_flag:
             connection.autocommit = True
-        cursor = connection.cursor()
-        yield cursor
+        yield connection
     finally:
-        cursor.close()
         connection.close()
 
 
@@ -42,7 +40,8 @@ def index():
 # url_lists
 @app.get('/urls')
 def urls_display():
-    urls = db.get_sites()
+    with connect(DATABASE_URL) as conn:
+        urls = db.get_sites(conn)
     return render_template(
         '/urls.html',
         urls=urls
@@ -62,23 +61,25 @@ def urls_add():
     url_name = url_parsed.scheme + '://' + url_parsed.netloc
     # creation_date под капот
     creation_date = date.today()
-    id = db.get_url_id_by_name(url_name)
-    if id:
-        flash('Страница уже существует', 'info')
-        return redirect(url_for('url_info', id=id[0]))
-    id = db.create_url(url_name, creation_date)
+    with connect(DATABASE_URL) as conn:
+        id = db.get_url_id_by_name(conn, url_name)
+        if id:
+            flash('Страница уже существует', 'info')
+            return redirect(url_for('url_info', id=id[0]))
+        id = db.create_url(conn, url_name, creation_date)
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_info', id=id))
 
 
 @app.route('/urls/<id>')
 def url_info(id):
-    url = db.get_url_by_id(id)
-    if not url:
-        abort(404)
-    name = url[1]
-    created_at = url[2]
-    checks = db.get_url_checks_by_id(id)
+    with connect(DATABASE_URL) as conn:        
+        url = db.get_url_by_id(conn, id)
+        if not url:
+            abort(404)
+        name = url[1]
+        created_at = url[2]
+        checks = db.get_url_checks_by_id(conn, id)
     return render_template(
         'urls_id.html',
         id=id,
@@ -90,31 +91,32 @@ def url_info(id):
 
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
-    url = db.get_url_by_id(id)
-    if not url:
-        abort(404)
-    name = url[1]
-    created_at = url[2]
-    try:
-        # r -> response
-        # логировать чтобы понимать что происходит с приложением. В опасных местах. Важные переменные и т.д.
-        # Например этот реквест
-        request = requests.get(name)
-        # вынести за трай парсинк и ифы
-        # И вместо чексов он делает редирект в каждом месте flash.
-        code = request.status_code
-        soup = BeautifulSoup(request.text, 'html.parser')
-        h1, title, description = parse_seo_content(soup)
-        if code != 200:
+    with connect(DATABASE_URL) as conn:
+        url = db.get_url_by_id(conn, id)
+        if not url:
+            abort(404)
+        name = url[1]
+        created_at = url[2]
+        try:
+            # r -> response
+            # логировать чтобы понимать что происходит с приложением. В опасных местах. Важные переменные и т.д.
+            # Например этот реквест
+            request = requests.get(name)
+            # вынести за трай парсинк и ифы
+            # И вместо чексов он делает редирект в каждом месте flash.
+            code = request.status_code
+            soup = BeautifulSoup(request.text, 'html.parser')
+            h1, title, description = parse_seo_content(soup)
+            if code != 200:
+                checks = []
+                flash('Произошла ошибка при проверке', 'error')
+            else:
+                date1 = date.today()
+                checks = db.create_check(conn, id, code, h1, title, description, date1)
+                flash('Страница успешно проверена', 'success')
+        except Exception:
             checks = []
             flash('Произошла ошибка при проверке', 'error')
-        else:
-            date1 = date.today()
-            checks = db.create_check(id, code, h1, title, description, date1)
-            flash('Страница успешно проверена', 'success')
-    except Exception:
-        checks = []
-        flash('Произошла ошибка при проверке', 'error')
     return render_template(
         'urls_id.html',
         id=id,
