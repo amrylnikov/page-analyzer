@@ -73,7 +73,7 @@ def urls_add():
 
 @app.route('/urls/<id>')
 def url_info(id):
-    with connect(DATABASE_URL) as conn:        
+    with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
         if not url:
             abort(404)
