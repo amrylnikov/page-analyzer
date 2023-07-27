@@ -98,20 +98,20 @@ def url_check(id):
             # логировать чтобы понимать что происходит с приложением. В опасных местах. Важные переменные и т.д.
             # Например этот реквест
             request = requests.get(name)
-            # вынести за трай парсинк и ифы
-            # И вместо чексов он делает редирект в каждом месте flash.
-            code = request.status_code
-            soup = BeautifulSoup(request.text, 'html.parser')
-            h1, title, description = parse_seo_content(soup)
-            if code != 200:
-                checks = []
-                flash('Произошла ошибка при проверке', 'error')
-            else:
-                checks = db.create_check(conn, id, code, h1, title, description)
-                flash('Страница успешно проверена', 'success')
         except Exception:
+            flash('Произошла ошибка при проверке', 'error')
+            return redirect(url_for('url_info', id=id))
+        # вынести за трай парсинк и ифы
+        # И вместо чексов он делает редирект в каждом месте flash.
+        code = request.status_code
+        soup = BeautifulSoup(request.text, 'html.parser')
+        h1, title, description = parse_seo_content(soup)
+        if code != 200:
             checks = []
             flash('Произошла ошибка при проверке', 'error')
+        else:
+            checks = db.create_check(conn, id, code, h1, title, description)
+            flash('Страница успешно проверена', 'success')
     return render_template(
         'urls_id.html',
         id=id,
