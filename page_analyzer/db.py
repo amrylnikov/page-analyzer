@@ -1,36 +1,26 @@
-from contextlib import contextmanager
 from datetime import date
 
 
-@contextmanager
-def get_cursor(connection):
-    try:
-        cursor = connection.cursor()
-        yield cursor
-    finally:
-        cursor.close()
-
-
 def get_url_by_id(conn, id):
-    with get_cursor(conn) as cursor:
+    with conn.cursor() as cursor:
         cursor.execute("SELECT id, name, created_at FROM urls WHERE id = %s", (id,))
         return cursor.fetchone()
 
 
 def get_url_checks_by_id(conn, id):
-    with get_cursor(conn) as cursor:
+    with conn.cursor() as cursor:
         cursor.execute("SELECT id, url_id, status_code, h1, title, description, created_at FROM url_checks WHERE url_id = %s", (id,))
         return cursor.fetchall()
 
 
 def get_url_id_by_name(conn, name):
-    with get_cursor(conn) as cursor:
+    with conn.cursor() as cursor:
         cursor.execute("SELECT id FROM urls WHERE name = %s", (name,))
         return cursor.fetchone()
 
 
 def get_all_url_checks(conn):
-    with get_cursor(conn) as cursor:
+    with conn.cursor() as cursor:
         cursor.execute("""
                     SELECT DISTINCT ON (urls.id) urls.id, urls.name, url_checks.created_at, url_checks.status_code
                     FROM urls
@@ -42,13 +32,13 @@ def get_all_url_checks(conn):
 
 def create_url(conn, name):
     creation_date = date.today()
-    with get_cursor(conn) as cursor:
+    with conn.cursor() as cursor:
         cursor.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id;", (name, creation_date))
         return cursor.fetchone()[0]
 
 
 def create_check(conn, id, code, h1, title, description):
-    with get_cursor(conn) as cursor:
+    with conn.cursor() as cursor:
         creation_date = date.today()
         cursor.execute('''INSERT INTO url_checks
                     (url_id, status_code, h1, title, description, created_at)
