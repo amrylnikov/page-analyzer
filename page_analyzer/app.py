@@ -20,13 +20,17 @@ app.secret_key = os.getenv('SECRET_KEY')
 
 
 @contextmanager
-def connect(bd_url, autocommit_flag=False):
+def connect(bd_url):
+    connection = None
     try:
         connection = psycopg2.connect(bd_url)
-        if autocommit_flag:
-            connection.autocommit = True
         yield connection
+    except Exception:
+        if connection:
+            connection.rollback()
+        raise
     finally:
+        connection.commit()
         connection.close()
 
 
@@ -38,10 +42,10 @@ def index():
 @app.get('/urls')
 def urls_lists():
     with connect(DATABASE_URL) as conn:
-        urls = db.get_all_url_checks(conn)
+        url_checks = db.get_all_url_checks(conn)
     return render_template(
         '/urls.html',
-        urls=urls
+        urls=url_checks
     )
 
 
@@ -56,7 +60,7 @@ def urls_add():
         ), 422
     url_parsed = urlparse(url_name)
     url_name = url_parsed.scheme + '://' + url_parsed.netloc
-    with connect(DATABASE_URL, True) as conn:
+    with connect(DATABASE_URL) as conn:
         url_id = db.get_url_by_name(conn, url_name)
         if url_id:
             flash('Страница уже существует', 'info')
@@ -86,7 +90,7 @@ def url_info(id):
 
 @app.route('/urls/<id>/checks', methods=['GET', 'POST'])
 def url_check(id):
-    with connect(DATABASE_URL, True) as conn:
+    with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
         if not url:
             abort(404)
