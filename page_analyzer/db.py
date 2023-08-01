@@ -39,7 +39,8 @@ def get_all_url_checks(conn):
                        url_checks.created_at, url_checks.status_code
                     FROM urls
                     LEFT JOIN url_checks ON url_checks.url_id = urls.id
-                    ORDER BY urls.id;
+                    ORDER BY urls.id
+                    LIMIT 100;
                     """)
         return cursor.fetchall()
 
@@ -58,9 +59,19 @@ def create_url(conn, name):
 def create_check(conn, id, code, h1, title, description):
     with conn.cursor() as cursor:
         creation_date = date.today()
-        cursor.execute('''INSERT INTO url_checks
+        cursor.execute("""
+                    INSERT INTO url_checks
                     (url_id, status_code, h1, title, description, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    ;''', (id, code, h1, title, description, creation_date))
-        cursor.execute("SELECT * FROM url_checks WHERE url_id = %s", (id,))
+                    VALUES (%s, %s, %s, %s, %s, %s);
+                    """, (id, code, h1, title, description, creation_date))
+
+
+def get_check_by_url_id(conn, id):
+    with conn.cursor() as cursor:
+        cursor.execute("""
+                    SELECT id, url_id, status_code, h1, title, description,
+                       created_at
+                    FROM url_checks
+                    WHERE url_id = %s;
+                    """, (id,))
         return cursor.fetchall()

@@ -104,7 +104,8 @@ def url_check(id):
             return redirect(url_for('url_info', id=id))
         soup = BeautifulSoup(request.text, 'html.parser')
         h1, title, description = parse_seo_content(soup)
-        checks = db.create_check(conn, id, code, h1, title, description)
+        db.create_check(conn, id, code, h1, title, description)
+        checks = db.get_check_by_url_id(conn, id)
     flash('Страница успешно проверена', 'success')
     return render_template(
         'urls_id.html',
