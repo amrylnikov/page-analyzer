@@ -10,8 +10,9 @@ def get_url_by_id(conn, id):
                     WHERE id = %s;
                     """, (id,))
         result = cursor.fetchone()
-        Url = namedtuple('Url', ['id', 'name', 'created_at'])
-        return Url(*result)
+        if result:
+            Url = namedtuple('Url', ['id', 'name', 'created_at'])
+            return Url(*result)
 
 
 def get_url_checks_by_id(conn, id):
