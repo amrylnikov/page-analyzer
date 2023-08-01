@@ -32,11 +32,6 @@ def connect(bd_url):
             connection.close()
 
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -78,7 +73,7 @@ def url_info(id):
     with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
         if not url:
-            app.register_error_handler(404, page_not_found)
+            return render_template('404.html'), 404
         name = url.name
         created_at = url.created_at
         url_checks = db.get_url_checks_by_id(conn, id)
@@ -96,7 +91,7 @@ def url_check(id):
     with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
         if not url:
-            app.register_error_handler(404, page_not_found)
+            return render_template('404.html'), 404
         name = url.name
         created_at = url.created_at
         try:
