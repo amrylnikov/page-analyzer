@@ -1,3 +1,4 @@
+from collections import namedtuple
 from datetime import date
 
 
@@ -8,7 +9,9 @@ def get_url_by_id(conn, id):
                     FROM urls
                     WHERE id = %s;
                     """, (id,))
-        return cursor.fetchone()
+        result = cursor.fetchone()
+        Url = namedtuple('Url', ['id', 'name', 'created_at'])
+        return Url(*result)
 
 
 def get_url_checks_by_id(conn, id):

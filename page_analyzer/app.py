@@ -73,8 +73,8 @@ def url_info(id):
         url = db.get_url_by_id(conn, id)
         if not url:
             abort(404)
-        name = url[1]
-        created_at = url[2]
+        name = url.name
+        created_at = url.created_at
         checks = db.get_url_checks_by_id(conn, id)
     return render_template(
         'urls_id.html',
@@ -91,8 +91,8 @@ def url_check(id):
         url = db.get_url_by_id(conn, id)
         if not url:
             abort(404)
-        name = url[1]
-        created_at = url[2]
+        name = url.name
+        created_at = url.created_at
         try:
             request = requests.get(name)
         except Exception:
