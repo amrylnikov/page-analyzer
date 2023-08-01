@@ -58,10 +58,10 @@ def urls_add():
     url_parsed = urlparse(url_name)
     url_name = url_parsed.scheme + '://' + url_parsed.netloc
     with connect(DATABASE_URL, True) as conn:
-        id = db.get_url_id_by_name(conn, url_name)
+        id = db.get_url_by_name(conn, url_name)[0]
         if id:
             flash('Страница уже существует', 'info')
-            return redirect(url_for('url_info', id=id[0]))
+            return redirect(url_for('url_info', id=id))
         id = db.create_url(conn, url_name)
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_info', id=id))
