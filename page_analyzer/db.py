@@ -48,8 +48,8 @@ def create_url(conn, name):
     creation_date = date.today()
     with conn.cursor() as cursor:
         cursor.execute("""
-                    INSERT INTO urls (name, created_at) 
-                    VALUES (%s, %s) 
+                    INSERT INTO urls (name, created_at)
+                    VALUES (%s, %s)
                     RETURNING id;
                     """, (name, creation_date))
         return cursor.fetchone()[0]
