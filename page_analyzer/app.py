@@ -95,13 +95,12 @@ def url_check(id):
         created_at = url.created_at
         try:
             request = requests.get(name)
-        except requests.exceptions.ConnectionError:
+            request.raise_for_status()
+        except (requests.exceptions.ConnectionError,
+                requests.exceptions.HTTPError):
             flash('Произошла ошибка при проверке', 'error')
             return redirect(url_for('url_info', id=id))
         code = request.status_code
-        if code != 200:
-            flash('Произошла ошибка при проверке', 'error')
-            return redirect(url_for('url_info', id=id))
         soup = BeautifulSoup(request.text, 'html.parser')
         h1, title, description = content.get_seo_data_from_html(soup)
         db.create_check(conn, id, code, h1, title, description)
