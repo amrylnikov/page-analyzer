@@ -22,9 +22,13 @@ def get_url_checks_by_id(conn, id):
         return cursor.fetchall()
 
 
-def get_url_id_by_name(conn, name):
+def get_url_by_name(conn, name):
     with conn.cursor() as cursor:
-        cursor.execute("SELECT id FROM urls WHERE name = %s", (name,))
+        cursor.execute("""
+                    SELECT id, name, created_at
+                    FROM urls
+                    WHERE name = %s
+                    """, (name,))
         return cursor.fetchone()
 
 
