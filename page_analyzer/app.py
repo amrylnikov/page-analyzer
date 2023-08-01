@@ -5,11 +5,9 @@ from urllib.parse import urlparse
 import psycopg2
 import requests
 from dotenv import load_dotenv
-from flask import (Flask, abort, flash, redirect, render_template, request,
-                   url_for)
+from flask import Flask, flash, redirect, render_template, request, url_for
 
-from page_analyzer import db
-from page_analyzer import content
+from page_analyzer import content, db
 from page_analyzer.validator import validate
 
 load_dotenv()
