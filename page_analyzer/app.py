@@ -15,9 +15,8 @@ from page_analyzer.validator import validate
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
-SECRET_KEY = os.getenv('SECRET_KEY')
 app = Flask(__name__)
-app.secret_key = SECRET_KEY
+app.secret_key = os.getenv('SECRET_KEY')
 
 
 @contextmanager
@@ -58,13 +57,13 @@ def urls_add():
     url_parsed = urlparse(url_name)
     url_name = url_parsed.scheme + '://' + url_parsed.netloc
     with connect(DATABASE_URL, True) as conn:
-        id = db.get_url_by_name(conn, url_name)
-        if id:
+        url_id = db.get_url_by_name(conn, url_name)
+        if url_id:
             flash('Страница уже существует', 'info')
-            return redirect(url_for('url_info', id=id[0][0]))
-        id = db.create_url(conn, url_name)
+            return redirect(url_for('url_info', id=url_id[0][0]))
+        url_id = db.create_url(conn, url_name)
     flash('Страница успешно добавлена', 'success')
-    return redirect(url_for('url_info', id=id))
+    return redirect(url_for('url_info', id=url_id))
 
 
 @app.route('/urls/<id>')
