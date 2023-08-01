@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 
 import psycopg2
 import requests
-from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from flask import (Flask, abort, flash, redirect, render_template, request,
                    url_for)
@@ -30,8 +29,9 @@ def connect(bd_url):
             connection.rollback()
         raise
     finally:
-        connection.commit()
-        connection.close()
+        if connection:
+            connection.commit()
+            connection.close()
 
 
 @app.route('/')
@@ -104,8 +104,7 @@ def url_check(id):
             flash('Произошла ошибка при проверке', 'error')
             return redirect(url_for('url_info', id=id))
         code = request.status_code
-        soup = BeautifulSoup(request.text, 'html.parser')
-        h1, title, description = content.get_seo_data_from_html(soup)
+        h1, title, description = content.get_seo_data_from_html(request.text)
         db.create_check(conn, id, code, h1, title, description)
         checks = db.get_check_by_url_id(conn, id)
     flash('Страница успешно проверена', 'success')
