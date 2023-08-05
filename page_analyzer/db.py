@@ -1,18 +1,17 @@
-from collections import namedtuple
 from datetime import date
+
+from psycopg2 import extras
 
 
 def get_url_by_id(conn, id):
-    with conn.cursor() as cursor:
+    with conn.cursor(cursor_factory=extras.NamedTupleCursor) as cursor:
         cursor.execute("""
                     SELECT id, name, created_at
                     FROM urls
                     WHERE id = %s;
                     """, (id,))
         result = cursor.fetchone()
-        if result:
-            Url = namedtuple('Url', ['id', 'name', 'created_at'])
-            return Url(*result)
+        return result
 
 
 def get_url_checks_by_id(conn, id):
