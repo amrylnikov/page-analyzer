@@ -1,4 +1,5 @@
 import os
+import logging
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
@@ -18,23 +19,32 @@ app.secret_key = os.getenv('SECRET_KEY')
 
 @contextmanager
 def connect(bd_url):
-    connection = None
+    flag = True
     try:
         connection = psycopg2.connect(bd_url)
         yield connection
     except Exception:
         if connection:
             connection.rollback()
+            flag = False
         raise
     finally:
         if connection:
-            connection.commit()
+            if flag:
+                connection.commit()
             connection.close()
 
 
 @app.errorhandler(404)
-def page_not_found_404(e):
+def page_not_found_404():
+    logging.warning('Error 404')
     return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def page_not_found_500():
+    logging.warning('Error 500')
+    return render_template('500.html'), 500
 
 
 @app.route('/')
@@ -91,7 +101,7 @@ def url_info(id):
     )
 
 
-@app.route('/urls/<id>/checks', methods=['GET', 'POST'])
+@app.route('/urls/<id>/checks', methods=['POST'])
 def url_check(id):
     with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
