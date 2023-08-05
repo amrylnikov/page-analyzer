@@ -67,7 +67,7 @@ def urls_add():
         url_id = db.get_url_by_name(conn, url_name)
         if url_id:
             flash('Страница уже существует', 'info')
-            return redirect(url_for('url_info', id=url_id[0][0]))
+            return redirect(url_for('url_info', id=url_id[0]))
         url_id = db.create_url(conn, url_name)
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_info', id=url_id))

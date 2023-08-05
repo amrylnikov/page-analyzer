@@ -10,8 +10,7 @@ def get_url_by_id(conn, id):
                     FROM urls
                     WHERE id = %s;
                     """, (id,))
-        result = cursor.fetchone()
-        return result
+        return cursor.fetchone()
 
 
 def get_url_checks_by_id(conn, id):
@@ -32,7 +31,7 @@ def get_url_by_name(conn, name):
                     FROM urls
                     WHERE name = %s;
                     """, (name,))
-        return cursor.fetchall()
+        return cursor.fetchone()
 
 
 def get_all_url_checks(conn):
@@ -43,7 +42,7 @@ def get_all_url_checks(conn):
                     FROM urls
                     LEFT JOIN url_checks ON url_checks.url_id = urls.id
                     ORDER BY urls.id
-                    LIMIT 100;
+                    LIMIT 100 OFFSET 0;
                     """)
         return cursor.fetchall()
 
