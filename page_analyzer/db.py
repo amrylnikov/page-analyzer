@@ -13,7 +13,7 @@ def get_url_by_id(conn, id):
         return cursor.fetchone()
 
 
-def get_url_checks_by_id(conn, id):
+def get_checks_by_url_id(conn, id):
     with conn.cursor() as cursor:
         cursor.execute("""
                     SELECT id, url_id, status_code, h1, title, description,

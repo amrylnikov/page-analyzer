@@ -91,7 +91,7 @@ def url_info(id):
             return page_not_found_404()
         name = url.name
         created_at = url.created_at
-        url_checks = db.get_url_checks_by_id(conn, id)
+        url_checks = db.get_checks_by_url_id(conn, id)
     return render_template(
         'urls_id.html',
         id=id,
@@ -110,10 +110,10 @@ def url_check(id):
         name = url.name
         created_at = url.created_at
         try:
-            request = requests.get(name)
+            request = requests.get(name, timeout=3.5)
             request.raise_for_status()
-        except (requests.exceptions.ConnectionError,
-                requests.exceptions.HTTPError):
+        except requests.RequestException:
+            print('IS IT HAPPENING?')
             flash('Произошла ошибка при проверке', 'error')
             return redirect(url_for('url_info', id=id))
         code = request.status_code
