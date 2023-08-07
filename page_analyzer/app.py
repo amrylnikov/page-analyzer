@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import psycopg2
 import requests
 from dotenv import load_dotenv
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask, flash, redirect, render_template, request, url_for, abort
 
 from page_analyzer import content, db
 from page_analyzer.validator import validate
@@ -19,30 +19,28 @@ app.secret_key = os.getenv('SECRET_KEY')
 
 @contextmanager
 def connect(bd_url):
-    flag = True
     try:
         connection = psycopg2.connect(bd_url)
         yield connection
     except Exception:
         if connection:
             connection.rollback()
-            flag = False
         raise
+    else:
+        connection.commit()
     finally:
         if connection:
-            if flag:
-                connection.commit()
             connection.close()
 
 
 @app.errorhandler(404)
-def page_not_found_404():
+def raise_error_404(e=404):
     logging.warning('Error 404')
     return render_template('404.html'), 404
 
 
 @app.errorhandler(500)
-def page_not_found_500():
+def raise_error_500(e=500):
     logging.warning('Error 500')
     return render_template('500.html'), 500
 
@@ -88,7 +86,8 @@ def url_info(id):
     with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
         if not url:
-            return page_not_found_404()
+            raise_error_404()
+            abort(404)
         name = url.name
         created_at = url.created_at
         url_checks = db.get_checks_by_url_id(conn, id)
@@ -106,14 +105,14 @@ def url_check(id):
     with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
         if not url:
-            return page_not_found_404()
+            raise_error_404()
+            abort(404)
         name = url.name
         created_at = url.created_at
         try:
-            request = requests.get(name, timeout=3.5)
+            request = requests.get(name, timeout=30)
             request.raise_for_status()
         except requests.RequestException:
-            print('IS IT HAPPENING?')
             flash('Произошла ошибка при проверке', 'error')
             return redirect(url_for('url_info', id=id))
         code = request.status_code
