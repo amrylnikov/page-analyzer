@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import contextmanager
 from urllib.parse import urlparse
@@ -36,12 +37,13 @@ def connect(bd_url):
 
 
 @app.errorhandler(404)
-def server_error(e):
+def page_not_found(e):
     return render_template('404.html'), 404
 
 
 @app.errorhandler(500)
-def server_error_global(e):
+def server_error(e):
+    logging.exception(str(e))
     return render_template('500.html'), 500
 
 
@@ -112,8 +114,8 @@ def url_check(id):
         except requests.RequestException:
             flash('Произошла ошибка при проверке', 'error')
             return redirect(url_for('url_info', id=id))
-        code = request.status_code
+        status_code = request.status_code
         h1, title, description = content.get_seo_data_from_html(request.text)
-        db.create_check(conn, id, code, h1, title, description)
+        db.create_check(conn, id, status_code, h1, title, description)
     flash('Страница успешно проверена', 'success')
     return redirect(url_for('url_info', id=id))
