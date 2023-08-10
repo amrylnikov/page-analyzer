@@ -13,6 +13,7 @@ from page_analyzer.validator import validate
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
+TIMEOUT = int(os.getenv('TIMEOUT'))
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
@@ -27,21 +28,22 @@ def connect(bd_url):
             connection.rollback()
         raise
     else:
-        connection.commit()
+        if connection:
+            connection.commit()
     finally:
         if connection:
             connection.close()
 
 
 @app.errorhandler(404)
-def raise_error_404(e=404):
-    logging.warning('Error 404')
+def server_error(e):
+    logging.error('Error: %s', e)
     return render_template('404.html'), 404
 
 
 @app.errorhandler(500)
-def raise_error_500(e=500):
-    logging.warning('Error 500')
+def server_error_global(e):
+    logging.error('Error: %s', e)
     return render_template('500.html'), 500
 
 
@@ -86,7 +88,6 @@ def url_info(id):
     with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
         if not url:
-            raise_error_404()
             abort(404)
         name = url.name
         created_at = url.created_at
@@ -105,12 +106,11 @@ def url_check(id):
     with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
         if not url:
-            raise_error_404()
             abort(404)
         name = url.name
         created_at = url.created_at
         try:
-            request = requests.get(name, timeout=30)
+            request = requests.get(name, timeout=TIMEOUT)
             request.raise_for_status()
         except requests.RequestException:
             flash('Произошла ошибка при проверке', 'error')
@@ -120,6 +120,7 @@ def url_check(id):
         db.create_check(conn, id, code, h1, title, description)
         checks = db.get_check_by_url_id(conn, id)
     flash('Страница успешно проверена', 'success')
+    # redirect(url_for('url_info', id=id))
     return render_template(
         'urls_id.html',
         id=id,
