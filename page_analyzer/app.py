@@ -108,7 +108,6 @@ def url_check(id):
         if not url:
             abort(404)
         name = url.name
-        created_at = url.created_at
         try:
             request = requests.get(name, timeout=TIMEOUT)
             request.raise_for_status()
@@ -118,13 +117,5 @@ def url_check(id):
         code = request.status_code
         h1, title, description = content.get_seo_data_from_html(request.text)
         db.create_check(conn, id, code, h1, title, description)
-        checks = db.get_check_by_url_id(conn, id)
     flash('Страница успешно проверена', 'success')
-    # redirect(url_for('url_info', id=id))
-    return render_template(
-        'urls_id.html',
-        id=id,
-        name=name,
-        created_at=created_at,
-        checks=checks
-    )
+    return redirect(url_for('url_info', id=id))
