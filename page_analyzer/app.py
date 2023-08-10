@@ -51,7 +51,7 @@ def index():
 
 
 @app.get('/urls')
-def urls_lists():
+def urls_list():
     with connect(DATABASE_URL) as conn:
         url_checks = db.get_all_url_checks(conn)
     return render_template(
@@ -61,7 +61,7 @@ def urls_lists():
 
 
 @app.post('/urls')
-def urls_add():
+def url_add():
     url_name = request.form.get('url')
     errors = validate(url_name)
     if errors:
