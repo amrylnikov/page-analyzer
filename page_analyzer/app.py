@@ -47,7 +47,7 @@ def server_error(e):
     return render_template('500.html'), 500
 
 
-@app.route('/')
+@app.get('/')
 def index():
     return render_template('index.html')
 
@@ -83,7 +83,7 @@ def url_add():
     return redirect(url_for('url_info', id=url_id))
 
 
-@app.route('/urls/<id>')
+@app.get('/urls/<id>')
 def url_info(id):
     with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
@@ -101,7 +101,7 @@ def url_info(id):
     )
 
 
-@app.route('/urls/<id>/checks', methods=['POST'])
+@app.post('/urls/<id>/checks')
 def url_check(id):
     with connect(DATABASE_URL) as conn:
         url = db.get_url_by_id(conn, id)
@@ -109,7 +109,7 @@ def url_check(id):
             abort(404)
         name = url.name
         try:
-            request = requests.get(name, timeout=30)
+            request = requests.get(name, timeout=TIMEOUT)
             request.raise_for_status()
         except requests.RequestException:
             flash('Произошла ошибка при проверке', 'error')
