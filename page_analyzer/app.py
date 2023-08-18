@@ -72,7 +72,7 @@ def url_add():
             errors=errors,
         ), 422
     url_parsed = urlparse(url_name)
-    url_name = url_parsed.scheme + '://' + url_parsed.netloc
+    url_name = f'{url_parsed.scheme}://{url_parsed.netloc}'
     with connect(DATABASE_URL) as conn:
         url_to_check = db.get_url_by_name(conn, url_name)
         if url_to_check:
