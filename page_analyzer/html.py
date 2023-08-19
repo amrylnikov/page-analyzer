@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 
 
-def get_seo_data_from_html(text):
+def get_seo_data(text):
     soup = BeautifulSoup(text, 'html.parser')
     title = soup.title.get_text()
     h1 = soup.h1.text if soup.h1 else ''
