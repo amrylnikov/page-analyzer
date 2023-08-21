@@ -1,4 +1,4 @@
-{% extends "index.html" %}
+{% extends "base.html" %}
 {% block content %}
 <main class="flex-grow-1">
   <div class="container-lg mt-3">
@@ -20,9 +20,9 @@
             <td> 
               <a href="{{ url_for('url_info', id=url.id) }}"> {{ url.name }} </a>
             </td>
-            {% if url.id in url_checks.keys() %}
-            <td> {{ url_checks[url.id][6] }}</td>
-            <td> {{ url_checks[url.id][2] }}</td>
+            {% if url_checks[url.id] %}
+            <td> {{ url_checks[url.id].created_at }}</td>
+            <td> {{ url_checks[url.id].status_code }}</td>
             {% else %}
             <td></td>
             <td></td>
