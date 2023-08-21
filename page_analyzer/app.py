@@ -56,13 +56,11 @@ def index():
 def urls_list():
     with connect(DATABASE_URL) as conn:
         urls = db.get_all_urls(conn)
-        checks = db.get_all_url_checks(conn)
-        checks_dict = {x.url_id: [y.created_at, y.status_code]
-                       for x, y in zip(checks, checks)}
+        url_checks = {item.url_id: item for item in db.get_all_url_checks(conn)}
     return render_template(
         '/urls.html',
         urls=urls,
-        url_checks=checks_dict
+        url_checks=url_checks
     )
 
 

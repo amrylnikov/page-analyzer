@@ -62,7 +62,7 @@ def get_all_urls(conn):
                     FROM
                       urls
                     ORDER BY
-                      id;
+                      id DESC;
                     """)
         return cursor.fetchall()
 
@@ -71,7 +71,7 @@ def get_all_url_checks(conn):
     with conn.cursor(cursor_factory=extras.NamedTupleCursor) as cursor:
         cursor.execute("""
                     SELECT
-                        id,
+                        DISTINCT id,
                         url_id,
                         status_code,
                         h1,
