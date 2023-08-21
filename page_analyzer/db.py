@@ -61,13 +61,40 @@ def get_all_url_checks(conn):
                       url_checks.created_at,
                       url_checks.status_code
                     FROM
-                      urls
-                      LEFT JOIN url_checks ON url_checks.url_id = urls.id
+                      urls, url_checks
+                      WHERE url_checks.url_id = urls.id
                     ORDER BY
                       urls.id;
                     """)
-        return cursor.fetchall()
+        urls_with_checks = cursor.fetchall()
+        cursor.execute("""
+                    SELECT
+                      DISTINCT ON (urls.id) urls.id,
+                      urls.name
+                    FROM
+                      urls
+                    ORDER BY
+                      urls.id;
+                    """)
+        just_urls_table = cursor.fetchall()
+        urls_with_checks_id_list = [i.id for i in urls_with_checks]
+        urls_without_checks = [i for i in just_urls_table
+                               if i.id not in urls_with_checks_id_list]
+        all_urls = urls_with_checks + urls_without_checks
+        sorted_urls = sorted(all_urls, key=lambda url: url.id)
+        return sorted_urls
 
+                    # SELECT
+                    #   DISTINCT ON (urls.id) urls.id,
+                    #   urls.name,
+                    #   url_checks.created_at,
+                    #   url_checks.status_code
+                    # FROM
+                    #   urls
+                    #   LEFT JOIN url_checks ON url_checks.url_id = urls.id
+                    # ORDER BY
+                    #   urls.id;
+        
 
 def create_url(conn, name):
     creation_date = date.today()
