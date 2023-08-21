@@ -16,20 +16,20 @@
         <tbody>
           {% for url in urls %}
           <tr>
-            <td> {{ url[0] }} </td>
+            <td> {{ url.id }} </td>
             <td> 
-              <a href="{{ url_for('url_info', id=url[0]) }}"> {{ url[1] }} </a>
+              <a href="{{ url_for('url_info', id=url.id) }}"> {{ url.name }} </a>
             </td>
-            {% if url[2] and url[3] %}
-            <td> {{ url[2] }}</td>
-            <td> {{ url[3] }}</td>
+            {% if url.id in url_checks.keys() %}
+            <td> {{ url_checks[url.id][0] }}</td>
+            <td> {{ url_checks[url.id][1] }}</td>
             {% else %}
             <td></td>
             <td></td>
             {% endif %}
           </tr>
           {% endfor %}       
-        </tbody>
+        </tbody>      
       </table>
     </div>
   </div>

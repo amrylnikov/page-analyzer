@@ -55,10 +55,14 @@ def index():
 @app.get('/urls')
 def urls_list():
     with connect(DATABASE_URL) as conn:
-        url_checks = db.get_all_url_checks(conn)
+        urls = db.get_all_urls(conn)
+        checks = db.get_all_url_checks(conn)
+        checks_dict = {x.url_id: [y.created_at, y.status_code]
+                       for x, y in zip(checks, checks)}
     return render_template(
         '/urls.html',
-        urls=url_checks
+        urls=urls,
+        url_checks=checks_dict
     )
 
 
