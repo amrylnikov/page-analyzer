@@ -71,7 +71,8 @@ def get_all_url_checks(conn):
     with conn.cursor(cursor_factory=extras.NamedTupleCursor) as cursor:
         cursor.execute("""
                     SELECT
-                        DISTINCT id,
+                        DISTINCT ON (url_id)
+                        id,
                         url_id,
                         status_code,
                         h1,
@@ -81,7 +82,7 @@ def get_all_url_checks(conn):
                     FROM
                       url_checks
                     ORDER BY
-                      id;
+                      url_id;
                     """)
         return cursor.fetchall()
 

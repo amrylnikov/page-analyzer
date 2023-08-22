@@ -69,9 +69,10 @@ def url_add():
     url_name = request.form.get('url')
     errors = validate(url_name)
     if errors:
+        for error in errors:
+            flash(error, 'error')
         return render_template(
             'index.html',
-            errors=errors,
         ), 422
     url_parsed = urlparse(url_name)
     url_name = f'{url_parsed.scheme}://{url_parsed.netloc}'
