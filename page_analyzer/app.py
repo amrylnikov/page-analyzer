@@ -56,7 +56,9 @@ def index():
 def urls_list():
     with connect(DATABASE_URL) as conn:
         urls = db.get_all_urls(conn)
-        url_checks = {item.url_id: item for item in db.get_all_url_checks(conn)}
+        url_checks = {
+            item.url_id: item for item in db.get_last_url_checks(conn)
+        }
     return render_template(
         '/urls.html',
         urls=urls,
@@ -92,14 +94,10 @@ def url_info(id):
         url = db.get_url_by_id(conn, id)
         if not url:
             abort(404)
-        name = url.name
-        created_at = url.created_at
         url_checks = db.get_checks_by_url_id(conn, id)
     return render_template(
         'urls_id.html',
-        id=id,
-        name=name,
-        created_at=created_at,
+        url=url,
         checks=url_checks
     )
 

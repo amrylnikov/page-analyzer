@@ -67,7 +67,7 @@ def get_all_urls(conn):
         return cursor.fetchall()
 
 
-def get_all_url_checks(conn):
+def get_last_url_checks(conn):
     with conn.cursor(cursor_factory=extras.NamedTupleCursor) as cursor:
         cursor.execute("""
                     SELECT
@@ -82,7 +82,7 @@ def get_all_url_checks(conn):
                     FROM
                       url_checks
                     ORDER BY
-                      url_id;
+                      url_id, created_at DESC;
                     """)
         return cursor.fetchall()
 
