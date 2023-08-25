@@ -108,9 +108,8 @@ def url_check(id):
         url = db.get_url_by_id(conn, id)
         if not url:
             abort(404)
-        name = url.name
         try:
-            request = requests.get(name, timeout=TIMEOUT)
+            request = requests.get(url.name, timeout=TIMEOUT)
             request.raise_for_status()
         except requests.RequestException:
             flash('Произошла ошибка при проверке', 'error')
